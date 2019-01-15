@@ -79,9 +79,9 @@ pub fn generate_deploy_contract_tx(
 ) -> String {
     let func = runtime::Call::Contract(contract::Call::create::<runtime::Runtime>(
         0.into(),
-        1000000.into(),
-        code.clone(),
+        9999999.into(),
         code,
+        Vec::new(),
     ));
 
     generate_tx(seed, from, func, index, (Era::Immortal, hash))

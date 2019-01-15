@@ -61,7 +61,7 @@ fn main() {
         account,
         index,
         chainx_genesis_hash,
-        code.encode(),
+        code,
     );
     // deploy code
     let sub_deploy_id = chainx_rpc::deploy_contract(&mut chainx_client, tx);
@@ -71,6 +71,6 @@ fn main() {
         let des: Notification = serde_json::from_str(&msg).unwrap();
         let des: serde_json::Map<String, serde_json::Value> = des.params.parse().unwrap();
         let sub_id = &des["subscription"];
-        println!("----subscribe extrinsic return sub_id:{:?}----", sub_id);
+        println!("----subscribe extrinsic return sub_id:{:?}----result:{:?}---", sub_id, des["result"]);
     }
 }
