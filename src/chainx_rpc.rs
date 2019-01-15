@@ -1,6 +1,6 @@
 // Copyright 2019 Chainpool
 
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, Compact};
 use futures::Future;
 use hex;
 use primitives::{AccountId, Hash, Index};
@@ -43,7 +43,7 @@ pub fn genesis_hash(client: &mut Rpc) -> Hash {
         .unwrap()
 }
 
-pub fn account_nonce(client: &mut Rpc, account_id: &AccountId) -> Index {
+pub fn account_nonce(client: &mut Rpc, account_id: &AccountId) -> Index{
     let key = <srml_system::AccountNonce<Runtime>>::key_for(account_id);
     let key = twox_128(&key);
     let key = format!("0x{:}", HexDisplay::from(&key));
@@ -80,8 +80,8 @@ pub fn generate_deploy_contract_tx(
     let func = runtime::Call::Contract(contract::Call::create::<runtime::Runtime>(
         0.into(),
         1000000.into(),
+        code.clone(),
         code,
-        Vec::new(),
     ));
 
     generate_tx(seed, from, func, index, (Era::Immortal, hash))
@@ -96,7 +96,8 @@ fn generate_tx(
 ) -> String {
     let era = e.0;
     let hash: Hash = e.1;
-    let payload = (index, function.clone(), era, hash);
+    let sign_index: Compact<Index> = index.into();
+    let payload = (sign_index, function.clone(), era, hash);
     let signed: Address = sender.into();
     let pair = raw_seed.pair();
     let s = pair.sign(&payload.encode());
@@ -108,8 +109,8 @@ fn generate_tx(
     );
 
     // 编码字段 1 元组(发送人，签名)，func | 签名：(index,func, era, h)
-    let utx = runtime::UncheckedExtrinsic::new_signed(index, function, signed, signature, era);
-    let t: Vec<u8> = utx.encode();
+    let uxt = runtime::UncheckedExtrinsic::new_signed(index, function, signed, signature, era);
+    let t: Vec<u8> = uxt.encode();
     //format!("0x{:}", HexDisplay::from(&t))
     format!("0x{:}", hex::encode(&t))
 }
