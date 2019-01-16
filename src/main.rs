@@ -56,6 +56,16 @@ fn main() {
     let account = raw_seed.account_id();
     let index = chainx_rpc::account_nonce(&mut chainx_client, &account);
     let code = read_a_file().unwrap();
+    for i in 0..400 {
+			let tx = chainx_rpc::generate_transfer_tx(
+				&raw_seed,
+				account,
+				index + i,
+				chainx_genesis_hash,
+			);
+            chainx_rpc::transfer(&mut chainx_client, tx);
+    }
+    /*
     let tx = chainx_rpc::generate_deploy_contract_tx(
         &raw_seed,
         account,
@@ -65,6 +75,7 @@ fn main() {
     );
     // deploy code
     let sub_deploy_id = chainx_rpc::deploy_contract(&mut chainx_client, tx);
+    */
     loop {
         let msg = recv_tx.recv().unwrap();
         let msg = msg.into_text().unwrap();

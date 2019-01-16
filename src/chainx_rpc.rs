@@ -70,6 +70,29 @@ pub fn deploy_contract(client: &mut Rpc, code: String) -> u64 {
         .unwrap()
 }
 
+pub fn transfer(client: &mut Rpc, tx: String) -> u64 {
+    client
+        .request::<u64>("author_submitAndWatchExtrinsic", vec![json!(tx)])
+        .wait()
+        .unwrap()
+        .unwrap()
+}
+
+
+pub fn generate_transfer_tx(
+    seed: &RawSeed,
+    from: AccountId,
+    index: Index,
+    hash: Hash,
+) -> String {
+    let func = runtime::Call::Balances(runtime::BalancesCall::transfer::<runtime::Runtime>(
+        Default::default(),
+        10000.into(),
+    ));
+
+    generate_tx(seed, from, func, index, (Era::Immortal, hash))
+}
+
 pub fn generate_deploy_contract_tx(
     seed: &RawSeed,
     from: AccountId,
