@@ -11,10 +11,12 @@ parking_lot = "0.7"
 parity-codec = "2.0"
 jsonrpc-ws-server = { git = "https://github.com/paritytech/jsonrpc.git" }
 jsonrpc-core = { git = "https://github.com/paritytech/jsonrpc.git" }
-node-primitives = { git = "https://github.com/chainpool/substrate" }
-node-runtime = { git = "https://github.com/chainpool/substrate" }
+chainx-primitives = { path = "../ChainX/primitives" }
+chainx-runtime = { path = "../ChainX/runtime" }
 srml-contract = { git = "https://github.com/chainpool/substrate" }
 srml-system = { git = "https://github.com/chainpool/substrate" }
+srml-sudo = { git = "https://github.com/chainpool/substrate" }
+srml-consensus = { git = "https://github.com/chainpool/substrate" }
 srml-support = { git = "https://github.com/chainpool/substrate" }
 substrate-primitives = { git = "https://github.com/chainpool/substrate" }
 sr-primitives = { git = "https://github.com/chainpool/substrate" }

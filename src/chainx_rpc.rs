@@ -1,6 +1,6 @@
 // Copyright 2019 Chainpool
 
-use codec::{Decode, Encode, Compact};
+use codec::{Decode, Encode/*, Compact*/};
 use futures::Future;
 use hex;
 use primitives::{AccountId, Hash, Index};
@@ -62,26 +62,22 @@ pub fn account_nonce(client: &mut Rpc, account_id: &AccountId) -> Index{
     }
 }
 
-pub fn deploy_contract(client: &mut Rpc, code: String) -> u64 {
+pub fn sudo(client: &mut Rpc, tx: String) -> u64 {
     client
-        .request::<u64>("author_submitAndWatchExtrinsic", vec![json!(code)])
+        .request::<u64>("author_submitAndWatchExtrinsic", vec![json!(tx)])
         .wait()
         .unwrap()
         .unwrap()
 }
 
-pub fn generate_deploy_contract_tx(
+pub fn generate_sudo_tx(
     seed: &RawSeed,
     from: AccountId,
     index: Index,
     hash: Hash,
-    code: Vec<u8>,
 ) -> String {
-    let func = runtime::Call::Contract(contract::Call::create::<runtime::Runtime>(
-        0.into(),
-        9999999.into(),
-        code,
-        Vec::new(),
+    let func = runtime::Call::Sudo(sudo::Call::sudo::<runtime::Runtime>(
+        Box::new(runtime::Call::Consensus(consensus::Call::set_code::<runtime::Runtime>(Vec::<u8>::new())))
     ));
 
     generate_tx(seed, from, func, index, (Era::Immortal, hash))
@@ -96,8 +92,8 @@ fn generate_tx(
 ) -> String {
     let era = e.0;
     let hash: Hash = e.1;
-    let sign_index: Compact<Index> = index.into();
-    let payload = (sign_index, function.clone(), era, hash);
+    //let sign_index: Compact<Index> = index.into();
+    let payload = (index, function.clone(), era, hash, 1);
     let signed: Address = sender.into();
     let pair = raw_seed.pair();
     let s = pair.sign(&payload.encode());
@@ -109,7 +105,7 @@ fn generate_tx(
     );
 
     // 编码字段 1 元组(发送人，签名)，func | 签名：(index,func, era, h)
-    let uxt = runtime::UncheckedExtrinsic::new_signed(index, function, signed, signature, era);
+    let uxt = runtime::UncheckedExtrinsic::new_signed(index, function, signed, signature, era, 1);
     let t: Vec<u8> = uxt.encode();
     //format!("0x{:}", HexDisplay::from(&t))
     format!("0x{:}", hex::encode(&t))

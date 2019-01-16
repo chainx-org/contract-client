@@ -13,11 +13,12 @@ extern crate serde_json;
 extern crate log;
 extern crate env_logger;
 extern crate hex;
-extern crate node_primitives as primitives;
-extern crate node_runtime as runtime;
+extern crate chainx_primitives as primitives;
+extern crate chainx_runtime as runtime;
 extern crate parity_codec as codec;
 extern crate sr_primitives;
-extern crate srml_contract as contract;
+extern crate srml_sudo as sudo;
+extern crate srml_consensus as consensus;
 extern crate srml_support;
 extern crate srml_system;
 extern crate substrate_primitives;
@@ -55,16 +56,14 @@ fn main() {
     let raw_seed = chainx_rpc::RawSeed::new("Alice");
     let account = raw_seed.account_id();
     let index = chainx_rpc::account_nonce(&mut chainx_client, &account);
-    let code = read_a_file().unwrap();
-    let tx = chainx_rpc::generate_deploy_contract_tx(
+    let tx = chainx_rpc::generate_sudo_tx(
         &raw_seed,
         account,
         index,
         chainx_genesis_hash,
-        code,
     );
     // deploy code
-    let sub_deploy_id = chainx_rpc::deploy_contract(&mut chainx_client, tx);
+    let sub_deploy_id = chainx_rpc::sudo(&mut chainx_client, tx);
     loop {
         let msg = recv_tx.recv().unwrap();
         let msg = msg.into_text().unwrap();
