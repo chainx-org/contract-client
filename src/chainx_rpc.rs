@@ -1,6 +1,6 @@
 // Copyright 2019 Chainpool
 
-use codec::{Decode, Encode/*, Compact*/};
+use codec::{Decode, Encode, Compact};
 use futures::Future;
 use hex;
 use primitives::{AccountId, Hash, Index};
@@ -77,7 +77,7 @@ pub fn generate_sudo_tx(
     hash: Hash,
 ) -> String {
     let func = runtime::Call::Sudo(sudo::Call::sudo::<runtime::Runtime>(
-        Box::new(runtime::Call::Consensus(consensus::Call::set_code::<runtime::Runtime>(Vec::<u8>::new())))
+        Box::new(runtime::Call::Consensus(consensus::Call::set_heap_pages::<runtime::Runtime>(64)))
     ));
 
     generate_tx(seed, from, func, index, (Era::Immortal, hash))
@@ -92,8 +92,8 @@ fn generate_tx(
 ) -> String {
     let era = e.0;
     let hash: Hash = e.1;
-    //let sign_index: Compact<Index> = index.into();
-    let payload = (index, function.clone(), era, hash, 1);
+    let sign_index: Compact<Index> = index.into();
+    let payload = (sign_index, function.clone(), era, hash, Compact::<u32>::from(1));
     let signed: Address = sender.into();
     let pair = raw_seed.pair();
     let s = pair.sign(&payload.encode());
