@@ -1,6 +1,6 @@
 // Copyright 2019 Chainpool
 
-use codec::{Decode, Encode, Compact};
+use codec::{Encode, Decode, Compact};
 use futures::Future;
 use hex;
 use primitives::{AccountId, Hash, Index};
@@ -70,7 +70,22 @@ pub fn deploy_contract(client: &mut Rpc, code: String) -> u64 {
         .unwrap()
 }
 
-pub fn generate_deploy_contract_tx(
+pub fn generate_put_code_tx(
+    seed: &RawSeed,
+    from: AccountId,
+    index: Index,
+    hash: Hash,
+    code: Vec<u8>,
+) -> String {
+    let func = runtime::Call::Contract(contract::Call::put_code::<runtime::Runtime>(
+        99999,
+        code,
+    ));
+
+    generate_tx(seed, from, func, index, (Era::Immortal, hash))
+}
+
+pub fn generate_create_contract_tx(
     seed: &RawSeed,
     from: AccountId,
     index: Index,
@@ -78,9 +93,9 @@ pub fn generate_deploy_contract_tx(
     code: Vec<u8>,
 ) -> String {
     let func = runtime::Call::Contract(contract::Call::create::<runtime::Runtime>(
-        0.into(),
-        9999999.into(),
-        code,
+        100,
+        1_000_000,
+        runtime_io::blake2_256(&code).into(),
         Vec::new(),
     ));
 
@@ -100,13 +115,16 @@ fn generate_tx(
     let payload = (sign_index, function.clone(), era, hash);
     let signed: Address = sender.into();
     let pair = raw_seed.pair();
-    let s = pair.sign(&payload.encode());
+    let signature = payload.using_encoded(|b| if b.len() > 256 {
+        pair.sign(&runtime_io::blake2_256(b))
+    } else {
+        pair.sign(b)
+    }).into();
 
-    let signature = sr_primitives::Ed25519Signature(s);
-    assert_eq!(
+    /*assert_eq!(
         sr_primitives::verify_encoded_lazy(&signature, &payload, &sender),
         true
-    );
+    );*/
 
     // 编码字段 1 元组(发送人，签名)，func | 签名：(index,func, era, h)
     let uxt = runtime::UncheckedExtrinsic::new_signed(index, function, signed, signature, era);

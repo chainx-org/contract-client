@@ -21,12 +21,12 @@ extern crate srml_contract as contract;
 extern crate srml_support;
 extern crate srml_system;
 extern crate substrate_primitives;
+extern crate sr_io as runtime_io;
 
 mod chainx_rpc;
 mod ws;
 
 use self::ws::{Rpc, RpcError};
-use codec::Encode;
 use jsonrpc_core::Notification;
 use std::fs::File;
 use std::io::Read;
@@ -42,7 +42,7 @@ fn read_a_file() -> std::io::Result<Vec<u8>> {
 }
 
 fn chainx_thread(send_tx: mpsc::Sender<jsonrpc_ws_server::ws::Message>) -> Result<Rpc, RpcError> {
-    let port = 8087;
+    let port = 9944;
     Rpc::new(&format!("ws://127.0.0.1:{}", port), send_tx)
 }
 
@@ -56,14 +56,22 @@ fn main() {
     let account = raw_seed.account_id();
     let index = chainx_rpc::account_nonce(&mut chainx_client, &account);
     let code = read_a_file().unwrap();
-    let tx = chainx_rpc::generate_deploy_contract_tx(
+    let tx = chainx_rpc::generate_put_code_tx(
         &raw_seed,
         account,
         index,
         chainx_genesis_hash,
+        code.clone(),
+    );
+    let sub_deploy_id = chainx_rpc::deploy_contract(&mut chainx_client, tx);
+
+    let tx = chainx_rpc::generate_create_contract_tx(
+        &raw_seed,
+        account,
+        index + 1,
+        chainx_genesis_hash,
         code,
     );
-    // deploy code
     let sub_deploy_id = chainx_rpc::deploy_contract(&mut chainx_client, tx);
     loop {
         let msg = recv_tx.recv().unwrap();
